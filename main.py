@@ -18,26 +18,31 @@ display = pygame.Surface((300, 200))
 player_image = pygame.image.load('assets/player.png')
 player_image.set_colorkey((255,255,255))
 
-grass_image  = pygame.image.load('assets/grass.PNG')
-
+grass_image = pygame.image.load('assets/grass.PNG')
 TILE_SIZE = grass_image.get_width()
 dirt_image = pygame.image.load('assets/dirt.PNG')
 
 
-game_map = [['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
-            ['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
-            ['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
-            ['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
-            ['0','0','0','0','0','0','0','2','2','2','2','2','0','0','0','0','0','0','0'],
-            ['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
-            ['2','2','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','2','2'],
-            ['1','1','2','2','2','2','2','2','2','2','2','2','2','2','2','2','2','1','1'],
-            ['1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1'],
-            ['1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1'],
-            ['1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1'],
-            ['1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1'],
-            ['1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1','1']]
+moving_right = False
+moving_left = False
 
+
+player_y_momentum = 0
+air_timer = 0
+true_scroll = [0,0]
+
+
+def load_map(path):
+    f = open(path + '.txt', 'r')
+    data = f.read()
+    f.close()
+    data = data.split('\n')
+    game_map = []
+    for row in data:
+        game_map.append(list(row))
+    return game_map
+
+game_map = load_map('map')
 
 def collision_test(rect, tiles):
     hit_list = []
@@ -69,19 +74,28 @@ def move(rect, movement, tiles):
     return rect, collision_types
 
 
-
-moving_right = False
-moving_left = False
-
-
-player_y_momentum = 0
-air_timer = 0
-
 player_rect = pygame.Rect(50,50, player_image.get_width(), player_image.get_height())
-test_rect = pygame.Rect(100, 100, 100, 50)
+
+background_objects = [[0.25,[120,10,70,400]],[0.25,[280,30,40,400]],[0.5,[30,40,40,400]],[0.5,[130,90,100,400]],[0.5,[300,80,120,400]]]
+
 
 while True:
     display.fill((146,244,255))
+
+    true_scroll[0] += (player_rect.x-true_scroll[0] - 152)/20
+    true_scroll[1] += (player_rect.y-true_scroll[1] - 106)/20
+    scroll = true_scroll.copy()
+    scroll[0] = int(scroll[0])
+    scroll[1] = int(scroll[1])
+
+    pygame.draw.rect(display, (7,80,75), (0, 120, 300, 50))
+    for background_object in background_objects:
+        obj_rect = pygame.Rect(background_object[1][0]-scroll[0]*background_object[0],background_object[1][1]-scroll[1]*background_object[0],background_object[1][2],background_object[1][3])
+        if background_object[0] == 0.5:
+            pygame.draw.rect(display, (14, 222, 150), obj_rect)
+        else:
+            pygame.draw.rect(display, (9,91,81), obj_rect)
+
 
     tile_rects = []
     y = 0
@@ -89,9 +103,9 @@ while True:
         x=0
         for tile in row:
             if tile == '1':
-                display.blit(dirt_image, (x * TILE_SIZE, y * TILE_SIZE))
+                display.blit(dirt_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
             if tile == '2':
-                display.blit(grass_image, (x * TILE_SIZE, y * TILE_SIZE))
+                display.blit(grass_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
             if tile != '0':
                 tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
 
@@ -116,7 +130,7 @@ while True:
     else:
         air_timer += 1
 
-    display.blit(player_image, (player_rect.x, player_rect.y))
+    display.blit(player_image, (player_rect.x - scroll[0], player_rect.y - scroll[1]))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
