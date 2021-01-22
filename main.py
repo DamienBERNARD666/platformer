@@ -80,18 +80,23 @@ for i in range(5):
     jumper_objects.append(jumper_obj((random.randint(0,600)-300, 80)))
 
 
-def main_menu():
+def main_menu(screen):
     while True:
         screen.fill((146,244,255))
         draw_text('Menu principal', my_font, (255, 255, 255), screen, 20, 20)
 
         mx, my = pygame.mouse.get_pos()
         button_1 = pygame.Rect(50, 100, 200, 50)
+        button_2 = pygame.Rect(50, 200, 200, 50)
         if button_1.collidepoint((mx, my)):
             if click:
                 game()
+        if button_2.collidepoint((mx, my)):
+            if click:
+                options(screen)
 
         pygame.draw.rect(screen, (255, 0, 0), button_1)
+        pygame.draw.rect(screen, (255, 0, 0), button_2)
         click = False
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -259,6 +264,37 @@ def game():
         pygame.display.update()
         clock.tick(60)
 
+def options(screen):
+    monitor_size = [pygame.display.Info().current_w, pygame.display.Info().current_h]
+    fullscreen = False
+    running = True
+    while running:
+        screen.fill((146, 244, 255))
+        draw_text('Options', my_font, (255, 255, 255), screen, 20, 20)
+
+        mx, my = pygame.mouse.get_pos()
+        button_1 = pygame.Rect(50, 100, 200, 50)
+        pygame.draw.rect(screen, (255, 0, 0), button_1)
+        if button_1.collidepoint((mx, my)):
+            if click:
+                fullscreen = not fullscreen
+                if fullscreen:
+                    screen = pygame.display.set_mode(monitor_size, pygame.FULLSCREEN)
+                else:
+                    screen = pygame.display.set_mode((screen.get_width(), screen.get_height()), pygame.RESIZABLE)
+        click = False
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == KEYDOWN:
+                if event.key == K_ESCAPE:
+                    running = False
+            if event.type == MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    click = True
+        pygame.display.update()
+        clock.tick(60)
 
 
-main_menu()
+main_menu(screen)
