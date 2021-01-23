@@ -130,13 +130,16 @@ def game():
     moving_left = False
 
     lose = 0
-
     edges = [99999, 99999, -99999, -99999]
-    void = edges[3] + 32
+    void = edges[3]
 
     player_y_momentum = 0
     air_timer = 0
     true_scroll = [0, 0]
+
+    particles = []
+
+
     while running:
         display.fill((146, 244, 255))
 
@@ -171,9 +174,23 @@ def game():
                     display.blit(grass_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
                 if tile != '0':
                     tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
+                if (x * TILE_SIZE - scroll[1]) > edges[3]:
+                    edges[3] = (x * TILE_SIZE - scroll[1])
+                if (x * TILE_SIZE - scroll[1]) < edges[1]:
+                    edges[1] = (x * TILE_SIZE - scroll[1])
+                if (y * TILE_SIZE - scroll[0]) > edges[2]:
+                    edges[2] = (y * TILE_SIZE - scroll[0])
+                if (y * TILE_SIZE - scroll[0]) < edges[0]:
+                    edges[0] = (y * TILE_SIZE - scroll[0])
 
                 x += 1
             y += 1
+
+        void = edges[3]
+        if player.y > void:
+            if lose == 0:
+                lose = 160
+                print("Dead")
 
         player_movement = [0, 0]
         if moving_right:
@@ -219,6 +236,19 @@ def game():
 
         display_r = pygame.Rect(scroll[0], scroll[1], 300, 200)
 
+        if player_y_momentum < 0:
+            particles.append([[player.x, player.y], [random.randint(0, 20) / 10 - 1, -1], random.randint(4, 6)])
+
+
+        for particle in particles:
+            particle[0][0] += particle[1][0]
+            particle[0][1] += particle[1][1]
+            particle[2] -= 0.1
+            particle[1][1] += 0.1
+            pygame.draw.circle(display, (255, 255, 255), [int(particle[0][0]), int(particle[0][1])], int(particle[2]))
+            if particle[2] <= 0:
+                particles.remove(particle)
+
         for enemy in enemies:
             if display_r.colliderect(enemy[1].obj.rect):
                 enemy[0] += 0.2
@@ -235,6 +265,15 @@ def game():
                 enemy[1].display(display, scroll)
                 if player.obj.rect.colliderect(enemy[1].obj.rect):
                     player_y_momentum = - 4
+
+
+        if lose > 0:
+            lose -= 1
+            draw_text('Dead', my_font, (255,255,255), display, 0,0)
+            if lose == 1:
+                player.set_pos(100, 100)
+            if lose == 100:
+                lose = 26
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
