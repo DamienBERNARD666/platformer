@@ -62,7 +62,7 @@ class jumper_obj():
 
 e.load_animations('data/images/entities/')
 
-game_map = load_map('map')
+
 
 player_rect = pygame.Rect(100,100,30,13)
 
@@ -81,6 +81,7 @@ for i in range(5):
 
 
 def main_menu(screen):
+    click = False
     while True:
         screen.fill((146,244,255))
         draw_text('Menu principal', my_font, (255, 255, 255), screen, 20, 20)
@@ -120,6 +121,7 @@ def game():
 
     TILE_SIZE = grass_image.get_width()
     dirt_image = pygame.image.load('data/images/dirt.png')
+    plant_imgae = pygame.image.load('data/images/plant.png')
 
     jump_sound = pygame.mixer.Sound('data/audio/jump.wav')
     grass_sounds = [pygame.mixer.Sound('data/audio/grass_0.wav'), pygame.mixer.Sound('data/audio/grass_1.wav')]
@@ -130,6 +132,7 @@ def game():
     moving_left = False
 
     lose = 0
+    win = 0
     edges = [99999, 99999, -99999, -99999]
     void = edges[3]
 
@@ -138,6 +141,8 @@ def game():
     true_scroll = [0, 0]
 
     particles = []
+
+    current_level = 1
 
 
     while running:
@@ -165,6 +170,7 @@ def game():
 
         tile_rects = []
         y = 0
+        game_map = load_map('level_' + str(current_level))
         for row in game_map:
             x = 0
             for tile in row:
@@ -172,8 +178,18 @@ def game():
                     display.blit(dirt_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
                 if tile == '2':
                     display.blit(grass_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+                if tile == '3':
+                    if win == 0:
+                        display.blit(plant_imgae, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
+
                 if tile != '0':
-                    tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
+                    if tile == '3' and win == 0:
+                        itemR = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                        if player.obj.rect.colliderect(itemR):
+                            win = 100
+
+                    else:
+                     tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
                 if (x * TILE_SIZE - scroll[1]) > edges[3]:
                     edges[3] = (x * TILE_SIZE - scroll[1])
                 if (x * TILE_SIZE - scroll[1]) < edges[1]:
@@ -239,7 +255,6 @@ def game():
         if player_y_momentum < 0:
             particles.append([[player.x, player.y], [random.randint(0, 20) / 10 - 1, -1], random.randint(4, 6)])
 
-
         for particle in particles:
             particle[0][0] += particle[1][0]
             particle[0][1] += particle[1][1]
@@ -266,12 +281,21 @@ def game():
                 if player.obj.rect.colliderect(enemy[1].obj.rect):
                     player_y_momentum = - 4
 
+        if win > 0:
+            win -= 1
+            if win == 100:
+                win = 1
+            if win == 1:
+                player.set_pos(100, 100)
+                current_level += 1
+
 
         if lose > 0:
             lose -= 1
             draw_text('Dead', my_font, (255,255,255), display, 0,0)
             if lose == 1:
                 player.set_pos(100, 100)
+                game_map = load_map('level_' + str(current_level))
             if lose == 100:
                 lose = 26
 
