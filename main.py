@@ -46,12 +46,12 @@ def gen_clouds(edges):
     clouds_list = ['cloud_O', 'cloud_1', 'cloud_2']
     x = edges[0]
     y = edges[1]
-    x -= 320
-    y -= 320
+    x -= 160
+    y -= 460
     size_x = edges[2] - edges[0]
     size_y = edges[3] - edges[1]
     size_x += 640
-    size_y += 640
+    size_y +=  840
     area = size_x * size_y
     clouds = []
     for depth in range(3):
@@ -103,12 +103,18 @@ def main_menu(screen):
     click = False
     e.set_global_colorkey((255,0,255))
     while True:
-        screen.fill((146,244,255))
+        bg = pygame.image.load('data/images/parallax-mountain-bg.png')
+        screen.blit(bg, (0,0))
         draw_text('Menu principal', my_font, (255, 255, 255), screen, 20, 20)
 
         mx, my = pygame.mouse.get_pos()
+        button_play = pygame.image.load('data/images/button-1.png')
+        button_options = pygame.image.load('data/images/button-2.png')
         button_1 = pygame.Rect(50, 100, 200, 50)
         button_2 = pygame.Rect(50, 200, 200, 50)
+        screen.blit(button_play, (50, 100))
+        screen.blit(button_options, (50, 200))
+
         if button_1.collidepoint((mx, my)):
             if click:
                 game()
@@ -116,8 +122,6 @@ def main_menu(screen):
             if click:
                 options(screen)
 
-        pygame.draw.rect(screen, (255, 0, 0), button_1)
-        pygame.draw.rect(screen, (255, 0, 0), button_2)
         click = False
         for event in pygame.event.get():
             if event.type == QUIT:
@@ -141,7 +145,7 @@ def game():
 
     TILE_SIZE = grass_image.get_width()
     dirt_image = pygame.image.load('data/images/dirt.png')
-    plant_imgae = pygame.image.load('data/images/plant.png')
+    fox_image = pygame.image.load('data/images/fox.png')
     cloud_1_image = pygame.image.load('data/images/cloud_1.png')
     cloud_2_image = pygame.image.load('data/images/cloud_2.png')
     cloud_3_image = pygame.image.load('data/images/cloud_3.png')
@@ -169,7 +173,7 @@ def game():
 
     current_level = 1
     while running:
-        display.fill((134, 219, 251))
+        display.fill((171, 106, 140))
 
         if grass_sound_timer > 0:
             grass_sound_timer -= 1
@@ -195,8 +199,7 @@ def game():
                     display.blit(grass_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
                 if tile == '3':
                     if win == 0:
-                        display.blit(plant_imgae, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
-
+                        display.blit(fox_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
                 if tile != '0':
                     if tile == '3' and win == 0:
                         itemR = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
@@ -206,7 +209,10 @@ def game():
                      tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
                 x += 1
             y += 1
-
+        edges[0] = - (x * TILE_SIZE)
+        edges[2] = (x * TILE_SIZE)
+        edges[1] = - (y * TILE_SIZE)
+        edges[3] = (y * TILE_SIZE)
         void = edges[3]
         if player.y > void:
             if lose == 0:
@@ -294,6 +300,12 @@ def game():
             if win == 1:
                 player.set_pos(100, 100)
                 current_level += 1
+                print(x)
+                print(y)
+
+                print(edges)
+                clouds = gen_clouds(edges)
+
 
 
         if lose > 0:
@@ -342,8 +354,9 @@ def options(screen):
         draw_text('Options', my_font, (255, 255, 255), screen, 20, 20)
 
         mx, my = pygame.mouse.get_pos()
+        button_options = pygame.image.load('data/images/button-3.png')
         button_1 = pygame.Rect(50, 100, 200, 50)
-        pygame.draw.rect(screen, (255, 0, 0), button_1)
+        screen.blit(button_options, (50,100))
         if button_1.collidepoint((mx, my)):
             if click:
                 fullscreen = not fullscreen
