@@ -42,6 +42,25 @@ def load_map(path):
     return game_map
 
 
+def gen_clouds(edges):
+    clouds_list = ['cloud_O', 'cloud_1', 'cloud_2']
+    x = edges[0]
+    y = edges[1]
+    x -= 320
+    y -= 320
+    size_x = edges[2] - edges[0]
+    size_y = edges[3] - edges[1]
+    size_x += 640
+    size_y += 640
+    area = size_x * size_y
+    clouds = []
+    for depth in range(3):
+        depth = 4 - depth
+        for i in range(int(area/(1024*90))):
+            clouds.append([random.choice(clouds_list), random.randint(x,x+size_x)/depth, random.randint(y,y+size_y)/depth, depth])
+    return clouds
+
+
 jumper_img = pygame.image.load('data/images/jumper.png').convert()
 jumper_img.set_colorkey((255, 255, 255))
 
@@ -66,7 +85,7 @@ e.load_animations('data/images/entities/')
 
 player_rect = pygame.Rect(100,100,30,13)
 
-player = e.entity(100,100,5,13, 'player')
+player = e.entity(100,100,32,32, 'player')
 
 enemies = []
 for i in range(5):
@@ -82,6 +101,7 @@ for i in range(5):
 
 def main_menu(screen):
     click = False
+    e.set_global_colorkey((255,0,255))
     while True:
         screen.fill((146,244,255))
         draw_text('Menu principal', my_font, (255, 255, 255), screen, 20, 20)
@@ -122,19 +142,24 @@ def game():
     TILE_SIZE = grass_image.get_width()
     dirt_image = pygame.image.load('data/images/dirt.png')
     plant_imgae = pygame.image.load('data/images/plant.png')
+    cloud_1_image = pygame.image.load('data/images/cloud_1.png')
+    cloud_2_image = pygame.image.load('data/images/cloud_2.png')
+    cloud_3_image = pygame.image.load('data/images/cloud_3.png')
+    cloud_dictonnary = {'cloud_O': cloud_1_image, 'cloud_1': cloud_2_image, 'cloud_2': cloud_3_image}
 
     jump_sound = pygame.mixer.Sound('data/audio/jump.wav')
     grass_sounds = [pygame.mixer.Sound('data/audio/grass_0.wav'), pygame.mixer.Sound('data/audio/grass_1.wav')]
     grass_sounds[0].set_volume(0.2)
     grass_sounds[1].set_volume(0.2)
 
+
     moving_right = False
     moving_left = False
 
     lose = 0
     win = 0
-    edges = [99999, 99999, -99999, -99999]
-    void = edges[3]
+    edges = [-480, -208, 408, 208]
+    clouds = gen_clouds(edges)
 
     player_y_momentum = 0
     air_timer = 0
@@ -143,10 +168,8 @@ def game():
     particles = []
 
     current_level = 1
-
-
     while running:
-        display.fill((146, 244, 255))
+        display.fill((134, 219, 251))
 
         if grass_sound_timer > 0:
             grass_sound_timer -= 1
@@ -157,16 +180,8 @@ def game():
         scroll[0] = int(scroll[0])
         scroll[1] = int(scroll[1])
 
-        pygame.draw.rect(display, (7, 80, 75), pygame.Rect(0, 120, 300, 80))
-        for background_object in background_objects:
-            obj_rect = pygame.Rect(background_object[1][0] - scroll[0] * background_object[0],
-                                   background_object[1][1] - scroll[1] * background_object[0], background_object[1][2],
-                                   background_object[1][3])
-            if background_object[0] == 0.5:
-                pygame.draw.rect(display, (9, 80, 81), obj_rect)
-
-            else:
-                pygame.draw.rect(display, (9, 91, 81), obj_rect)
+        for cloud in clouds:
+            display.blit(cloud_dictonnary[cloud[0]], (cloud[1] - scroll[0] / cloud[3], cloud[2] - scroll[1] / cloud[3]))
 
         tile_rects = []
         y = 0
@@ -187,18 +202,8 @@ def game():
                         itemR = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
                         if player.obj.rect.colliderect(itemR):
                             win = 100
-
                     else:
                      tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
-                if (x * TILE_SIZE - scroll[1]) > edges[3]:
-                    edges[3] = (x * TILE_SIZE - scroll[1])
-                if (x * TILE_SIZE - scroll[1]) < edges[1]:
-                    edges[1] = (x * TILE_SIZE - scroll[1])
-                if (y * TILE_SIZE - scroll[0]) > edges[2]:
-                    edges[2] = (y * TILE_SIZE - scroll[0])
-                if (y * TILE_SIZE - scroll[0]) < edges[0]:
-                    edges[0] = (y * TILE_SIZE - scroll[0])
-
                 x += 1
             y += 1
 
@@ -219,12 +224,13 @@ def game():
             player_y_momentum = 3
 
         if player_movement[0] > 0:
-            player.set_flip(False)
+            player.set_flip(True)
             player.set_action('run')
         if player_movement[0] == 0:
+            player.set_flip(True)
             player.set_action('idle')
         if player_movement[0] < 0:
-            player.set_flip(True)
+            player.set_flip(False)
             player.set_action('run')
 
         collisions_types = player.move(player_movement, tile_rects)

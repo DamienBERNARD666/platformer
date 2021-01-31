@@ -263,9 +263,8 @@ def animation_sequence(sequence,base_path,colorkey=(255,255,255),transparency=25
     result = []
     for frame in sequence:
         image_id = base_path + base_path.split('/')[-2] + '_' + str(frame[0])
-        image = pygame.image.load(image_id + '.png').convert()
-        image.set_colorkey(colorkey)
-        image.set_alpha(transparency)
+        image = pygame.image.load(image_id + '.png')
+
         animation_database[image_id] = image.copy()
         for i in range(frame[1]):
             result.append(image_id)
