@@ -180,6 +180,11 @@ def game():
             jumper_objects.append(jumper_obj((300, 80)))
         if level == 3:
             jumper_objects.append(jumper_obj((520, 200)))
+        if level == 4:
+            jumper_objects.append(jumper_obj((180, 80)))
+            jumper_objects.append(jumper_obj((440, 0.1)))
+            enemies.append([0, e.entity(304, 0, 32, 32, 'enemy')])
+            enemies.append([0, e.entity(804, 33, 32, 32, 'enemy')])
 
 
     while running:
@@ -218,7 +223,10 @@ def game():
                     if tile == '3':
                         itemR = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
                         if player.obj.rect.colliderect(itemR):
-                            win = 1
+                            if win == 0:
+                                win = 1
+
+
                     else:
                      tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
                 x += 1
@@ -229,7 +237,8 @@ def game():
         edges[3] = (y * TILE_SIZE)
         void = edges[3]
         if player.y > void:
-            draw_text('Oups...you fall', my_font, (255, 255, 255), display, 60, 80)
+            pygame.draw.rect(display, (255, 247, 153), (0, 60, 500, 60))
+            draw_text('Oups...you fall', my_font,  (244, 154, 193), display, 60, 80)
             if lose == 0:
                 lose = 100
 
@@ -328,21 +337,29 @@ def game():
 
 
         # win condition
-        if win == 1:
-            victory_sound.play()
-            win = 0
-            enemies.clear()
-            jumper_objects.clear()
-            current_level += 1
-            if current_level != 3:
-                 player.set_pos(100, 100)
+        if win > 0:
+            if current_level != 4:
+                win +=1
+                pygame.draw.rect(display, (255,247,153), (0,60,500,60))
+                draw_text('Level complete !', my_font, (244, 154, 193), display, 50, 80)
+                if win == 100:
+                    victory_sound.play()
+                    enemies.clear()
+                    jumper_objects.clear()
+                    current_level += 1
+                    if current_level != 3:
+                        player.set_pos(100, 100)
+                    else:
+                        player.set_pos(2, 160)
+                    clouds = gen_clouds(edges)
+                    level_bluider(current_level)
+                    win = 0
             else:
-                player.set_pos(2, 160)
-            clouds = gen_clouds(edges)
-            level_bluider(current_level)
-
+                pygame.draw.rect(display, (255, 247, 153), (0, 60, 500, 60))
+                draw_text('Next levels soon...', my_font, (244, 154, 193), display, 50, 80)
         if health < 100:
-            draw_text('You\'ve failed', my_font, (255, 255, 255), display, 60, 80)
+            pygame.draw.rect(display, (255, 247, 153), (0, 60, 500, 60))
+            draw_text('You\'ve failed', my_font, (244, 154, 193), display, 60, 80)
 
         #death condition
         if lose > 0:
@@ -390,7 +407,8 @@ def options(screen):
     fullscreen = False
     running = True
     while running:
-        screen.fill((146, 244, 255))
+        bg = pygame.image.load('data/images/parallax-mountain-bg.png')
+        screen.blit(bg, (0, 0))
         draw_text('Options', my_font, (255, 255, 255), screen, 20, 20)
 
         mx, my = pygame.mouse.get_pos()
