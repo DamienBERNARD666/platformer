@@ -88,15 +88,11 @@ player_rect = pygame.Rect(100,100,30,13)
 player = e.entity(100,100,32,32, 'player')
 
 enemies = []
-for i in range(5):
-    enemies.append([0, e.entity(random.randint(0,600)-300, 80, 13, 13, 'enemy')])
 
 background_objects = [[0.25,[120,10,70,400]],[0.25,[280,30,40,400]],[0.5,[30,40,40,400]],[0.5,[130,90,100,400]],[0.5,[300,80,120,400]]]
 
 
 jumper_objects = []
-for i in range(5):
-    jumper_objects.append(jumper_obj((random.randint(0,600)-300, 80)))
 
 
 def main_menu(screen):
@@ -172,6 +168,8 @@ def game():
     particles = []
 
     current_level = 1
+    health = 200
+
     while running:
         display.fill((171, 106, 140))
 
@@ -192,6 +190,7 @@ def game():
         game_map = load_map('level_' + str(current_level))
         for row in game_map:
             x = 0
+
             for tile in row:
                 if tile == '1':
                     display.blit(dirt_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
@@ -201,10 +200,10 @@ def game():
                     if win == 0:
                         display.blit(fox_image, (x * TILE_SIZE - scroll[0], y * TILE_SIZE - scroll[1]))
                 if tile != '0':
-                    if tile == '3' and win == 0:
+                    if tile == '3':
                         itemR = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
                         if player.obj.rect.colliderect(itemR):
-                            win = 100
+                            win = 1
                     else:
                      tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
                 x += 1
@@ -215,9 +214,10 @@ def game():
         edges[3] = (y * TILE_SIZE)
         void = edges[3]
         if player.y > void:
+            draw_text('Oups...you fall', my_font, (255, 255, 255), display, 60, 80)
             if lose == 0:
-                lose = 160
-                print("Dead")
+                lose = 100
+
 
         player_movement = [0, 0]
         if moving_right:
@@ -264,17 +264,20 @@ def game():
 
         display_r = pygame.Rect(scroll[0], scroll[1], 300, 200)
 
-        if player_y_momentum < 0:
-            particles.append([[player.x, player.y], [random.randint(0, 20) / 10 - 1, -1], random.randint(4, 6)])
 
         for particle in particles:
-            particle[0][0] += particle[1][0]
-            particle[0][1] += particle[1][1]
-            particle[2] -= 0.1
-            particle[1][1] += 0.1
-            pygame.draw.circle(display, (255, 255, 255), [int(particle[0][0]), int(particle[0][1])], int(particle[2]))
-            if particle[2] <= 0:
+           try:
+               particle[0][0] += particle[1][0]
+               particle[0][1] += particle[1][1]
+               particle[2] -= 0.1
+               particle[1][1] += 0.1
+               pygame.draw.circle(display, (255, 255, 255), [int(particle[0][0]), int(particle[0][1])],
+                                  int(particle[2]))
+               if particle[2] <= 0:
+                   particles.remove(particle)
+           except KeyError:
                 particles.remove(particle)
+
 
         for enemy in enemies:
             if display_r.colliderect(enemy[1].obj.rect):
@@ -282,40 +285,55 @@ def game():
                 if enemy[0] > 3:
                     enemy[0] = 3
                 enemy_movement = [0, enemy[0]]
-                if player.x > enemy[1].x + 5:
-                    enemy_movement[0] = 1
-                if player.x < enemy[1].x - 5:
-                    enemy_movement[0] = -1
+
+                if enemy_movement[0] == 0:
+                    enemy[1].set_flip(False)
+                    enemy[1].set_action('idle')
+
+                if player_movement[0] != 0:
+                    if player.x > enemy[1].x + 5:
+                        enemy[1].set_flip(True)
+                        enemy_movement[0] = 1
+                    if player.x < enemy[1].x - 5:
+                        enemy[1].set_flip(False)
+                        enemy_movement[0] = -1
+
                 collisions_types = enemy[1].move(enemy_movement, tile_rects)
                 if collisions_types['bottom'] == True:
                     enemy[0] = 0
+                enemy[1].change_frame(1)
                 enemy[1].display(display, scroll)
+
                 if player.obj.rect.colliderect(enemy[1].obj.rect):
-                    player_y_momentum = - 4
-
-        if win > 0:
-            win -= 1
-            if win == 100:
-                win = 1
-            if win == 1:
-                player.set_pos(100, 100)
-                current_level += 1
-                print(x)
-                print(y)
-
-                print(edges)
-                clouds = gen_clouds(edges)
+                    health -= 2
+                    if health < 100:
+                        lose = 200
+                        enemies.remove(enemy)
 
 
+
+        if win == 1:
+            win = 0
+            player.set_pos(100, 100)
+            current_level += 1
+                #Level builder
+            if current_level == 2:
+                enemies.append([0, e.entity(200, 80, 32, 32, 'enemy')])
+                jumper_objects.append(jumper_obj((300, 80)))
+            clouds = gen_clouds(edges)
+
+        if health < 100:
+            draw_text('You\'ve failed', my_font, (255, 255, 255), display, 60, 80)
 
         if lose > 0:
             lose -= 1
-            draw_text('Dead', my_font, (255,255,255), display, 0,0)
             if lose == 1:
                 player.set_pos(100, 100)
-                game_map = load_map('level_' + str(current_level))
-            if lose == 100:
-                lose = 26
+                if health < 100:
+                    if current_level == 2:
+                        enemies.append([0, e.entity(200, 80, 32, 32, 'enemy')])
+                    health = 200
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -334,6 +352,7 @@ def game():
                     if air_timer < 6:
                         jump_sound.play()
                         player_y_momentum = -5
+
             if event.type == KEYUP:
                 if event.key == K_RIGHT:
                     moving_right = False
