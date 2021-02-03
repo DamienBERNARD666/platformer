@@ -1,3 +1,4 @@
 player/idle/ 7;20 loop
 player/run/ 7;7;7;7;7;7 loop
-enemy/idle/ 1 loop
+enemy/idle/ 7;20 loop
+enemy/run/ 7;7;7;7;7;7 loop
