@@ -8,8 +8,11 @@ clock = pygame.time.Clock()
 
 pygame.init()
 
+icon = pygame.image.load('data/images/entities/player/run/run_1.png')
+pygame.display.set_icon(icon)
+
 pygame.mixer.set_num_channels(64)
-pygame.display.set_caption('Platformer try')
+pygame.display.set_caption('Wolfy\'s dream')
 
 WINDOW_SIZE = (600,400)
 
@@ -20,16 +23,16 @@ display = pygame.Surface((300,200)) # used as the surface for rendering, which i
 
 my_font = pygame.font.Font("data/fonts/custom_font.ttf", 25)
 
-
-pygame.mixer.music.load('data/audio/music.wav')
-pygame.mixer.music.play(-1)
-
+sound1 = pygame.mixer.Sound('data/audio/music.mp3')
+sound1.set_volume(0.1)
+sound1.play()
 
 def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, 1, color)
     text_rect = text_obj.get_rect()
     text_rect.topleft = (x, y)
     surface.blit(text_obj, text_rect)
+
 
 def load_map(path):
     f = open(path + '.txt', 'r')
@@ -64,6 +67,7 @@ def gen_clouds(edges):
 jumper_img = pygame.image.load('data/images/jumper.png').convert()
 jumper_img.set_colorkey((255, 255, 255))
 
+
 class jumper_obj():
     def __init__(self, loc):
         self.loc = loc
@@ -80,8 +84,6 @@ class jumper_obj():
 
 
 e.load_animations('data/images/entities/')
-
-
 
 player_rect = pygame.Rect(100,100,30,13)
 
@@ -101,7 +103,7 @@ def main_menu(screen):
     while True:
         bg = pygame.image.load('data/images/parallax-mountain-bg.png')
         screen.blit(bg, (0,0))
-        draw_text('Menu principal', my_font, (255, 255, 255), screen, 20, 20)
+        draw_text('Menu principal    -    Wolfy\'s Dream', my_font, (255, 255, 255), screen, 20, 15)
 
         mx, my = pygame.mouse.get_pos()
         button_play = pygame.image.load('data/images/button-1.png')
@@ -148,6 +150,8 @@ def game():
     cloud_dictonnary = {'cloud_O': cloud_1_image, 'cloud_1': cloud_2_image, 'cloud_2': cloud_3_image}
 
     jump_sound = pygame.mixer.Sound('data/audio/jump.wav')
+    hit_sound = pygame.mixer.Sound('data/audio/hit.wav')
+    victory_sound = pygame.mixer.Sound('data/audio/victory.wav')
     grass_sounds = [pygame.mixer.Sound('data/audio/grass_0.wav'), pygame.mixer.Sound('data/audio/grass_1.wav')]
     grass_sounds[0].set_volume(0.2)
     grass_sounds[1].set_volume(0.2)
@@ -170,7 +174,18 @@ def game():
     current_level = 1
     health = 200
 
+    def level_bluider(level):
+        if level == 2:
+            enemies.append([0, e.entity(200, 80, 32, 32, 'enemy')])
+            jumper_objects.append(jumper_obj((300, 80)))
+        if level == 3:
+            jumper_objects.append(jumper_obj((520, 200)))
+
+
     while running:
+        print(player.obj.x)
+        print(player.obj.y)
+
         display.fill((171, 106, 140))
 
         if grass_sound_timer > 0:
@@ -307,34 +322,40 @@ def game():
                 if player.obj.rect.colliderect(enemy[1].obj.rect):
                     health -= 2
                     if health < 100:
+                        hit_sound.play()
                         lose = 200
                         enemies.remove(enemy)
 
 
-
+        # win condition
         if win == 1:
+            victory_sound.play()
             win = 0
-            player.set_pos(100, 100)
+            enemies.clear()
+            jumper_objects.clear()
             current_level += 1
-                #Level builder
-            if current_level == 2:
-                enemies.append([0, e.entity(200, 80, 32, 32, 'enemy')])
-                jumper_objects.append(jumper_obj((300, 80)))
+            if current_level != 3:
+                 player.set_pos(100, 100)
+            else:
+                player.set_pos(2, 160)
             clouds = gen_clouds(edges)
+            level_bluider(current_level)
 
         if health < 100:
             draw_text('You\'ve failed', my_font, (255, 255, 255), display, 60, 80)
 
+        #death condition
         if lose > 0:
             lose -= 1
             if lose == 1:
-                player.set_pos(100, 100)
+                enemies.clear()
+                if current_level != 3:
+                    player.set_pos(100, 100)
+                else:
+                    player.set_pos(2, 160)
+                level_bluider(current_level)
                 if health < 100:
-                    if current_level == 2:
-                        enemies.append([0, e.entity(200, 80, 32, 32, 'enemy')])
                     health = 200
-
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
