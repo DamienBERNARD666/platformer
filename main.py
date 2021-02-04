@@ -1,6 +1,6 @@
 import pygame, sys, random
 from pygame.locals import * # import pygame modules
-import data.engine as e
+import engine as e
 
 pygame.mixer.pre_init(44100, -16, 2,512)
 
@@ -22,10 +22,6 @@ display = pygame.Surface((300,200)) # used as the surface for rendering, which i
 
 
 my_font = pygame.font.Font("data/fonts/custom_font.ttf", 25)
-
-sound1 = pygame.mixer.Sound('data/audio/music.mp3')
-sound1.set_volume(0.1)
-sound1.play()
 
 def draw_text(text, font, color, surface, x, y):
     text_obj = font.render(text, 1, color)
@@ -103,7 +99,7 @@ def main_menu(screen):
     while True:
         bg = pygame.image.load('data/images/parallax-mountain-bg.png')
         screen.blit(bg, (0,0))
-        draw_text('Menu principal    -    Wolfy\'s Dream', my_font, (255, 255, 255), screen, 20, 15)
+        draw_text('Main Menu    -    Wolfy\'s Dream', my_font, (255, 255, 255), screen, 20, 15)
 
         mx, my = pygame.mouse.get_pos()
         button_play = pygame.image.load('data/images/button-1.png')
@@ -188,8 +184,6 @@ def game():
 
 
     while running:
-        print(player.obj.x)
-        print(player.obj.y)
 
         display.fill((171, 106, 140))
 
@@ -207,7 +201,7 @@ def game():
 
         tile_rects = []
         y = 0
-        game_map = load_map('level_' + str(current_level))
+        game_map = load_map('data/levels/level_' + str(current_level))
         for row in game_map:
             x = 0
 
@@ -225,8 +219,6 @@ def game():
                         if player.obj.rect.colliderect(itemR):
                             if win == 0:
                                 win = 1
-
-
                     else:
                      tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
                 x += 1
@@ -276,6 +268,7 @@ def game():
             player_y_momentum = 0
             air_timer = 0
         else:
+
             air_timer += 1
 
         player.change_frame(1)
@@ -388,8 +381,9 @@ def game():
                     moving_left = True
                 if event.key == K_UP:
                     if air_timer < 6:
-                        jump_sound.play()
                         player_y_momentum = -5
+                        jump_sound.play()
+
 
             if event.type == KEYUP:
                 if event.key == K_RIGHT:
